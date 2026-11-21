@@ -37,18 +37,28 @@ export function requestInputSummary(span: TraceSpan, t: TraceTranslate): string 
 }
 
 export interface Program { source: string; description: string; language?: 'typescript' | 'python' }
-/** Language comes from the recorded run_code schema, matching DSH's original inspector. */
-export function codeProgram(span: TraceSpan): Program | undefined {
-  if (span.name !== 'run_code') return undefined
-  const args = record(span.input)
-  if (typeof args?.code !== 'string') return undefined
-  const schema = record(span.schema)
+function recordedLanguage(raw: unknown): Program['language'] {
+  const schema = record(raw)
+  const declared = typeof schema?.description === 'string'
+    ? /^Execute a program in `([^`]+)`/.exec(schema.description)?.[1]?.toLowerCase()
+    : undefined
+  if (declared !== undefined && declared !== 'typescript' && declared !== 'python') return undefined
   const properties = record(record(schema?.parameters)?.properties)
   const description = record(properties?.code)?.description
-  const ts = typeof description === 'string' && /\bTypeScript\b/i.test(description)
-  const py = typeof description === 'string' && /\bPython\b/i.test(description)
-  return { source: args.code, description: typeof args.description === 'string' ? args.description : args.code.split(/\r?\n/).find(line => line.trim()) ?? '',
-    language: ts === py ? undefined : ts ? 'typescript' : 'python' }
+  const ts = declared === 'typescript' || (typeof description === 'string' && /\bTypeScript\b/i.test(description))
+  const py = declared === 'python' || (typeof description === 'string' && /\bPython\b/i.test(description))
+  return ts === py ? undefined : ts ? 'typescript' : 'python'
+}
+
+/** Language comes from the recorded program schema, matching DSH's trajectory inspector. */
+export function codeProgram(span: TraceSpan): Program | undefined {
+  if (span.kind !== 'tool' || (span.name !== 'run_code' && span.name !== 'cua_run_code')) return undefined
+  const args = record(span.input)
+  if (typeof args?.code !== 'string' || (args.description !== undefined && typeof args.description !== 'string')) return undefined
+  const description = typeof args.description === 'string' && args.description.trim() !== ''
+    ? args.description
+    : args.code.split(/\r?\n/).find(line => line.trim() !== '')?.trim() ?? ''
+  return { source: args.code, description, language: recordedLanguage(span.schema) }
 }
 
 /** Prefer tool intent and its primary argument; keep output available on every row. */
