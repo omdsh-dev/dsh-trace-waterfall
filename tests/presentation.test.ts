@@ -10,6 +10,15 @@ const span: TraceSpan = { id: 'tool:program', name: 'run_code', kind: 'tool', st
 describe('progressive trace presentation', () => {
   it('uses the recorded program description and language without exposing the opaque identifier as its title', () => {
     expect(codeProgram(span)).toEqual({ source: 'const value = 42\nreturn value', description: 'Read the project metadata', language: 'typescript' })
+    expect(codeProgram({ ...span, name: 'cua_run_code', input: JSON.stringify({ code: '\n  await click()\n', description: '   ' }),
+      schema: { description: 'Execute a program in `typescript` against the available tools.',
+        parameters: { properties: { code: { description: "The program to execute, following this tool's execution instructions." } } } } }))
+      .toEqual({ source: '\n  await click()\n', description: 'await click()', language: 'typescript' })
+    expect(codeProgram({ ...span, schema: { description: 'Execute a program in `ruby` against the available tools.',
+      parameters: { properties: { code: { description: 'TypeScript source code' } } } } })?.language).toBeUndefined()
+    expect(codeProgram({ ...span, schema: { description: 'Execute a program in `typescript` against the available tools.',
+      parameters: { properties: { code: { description: 'Python source code' } } } } })?.language).toBeUndefined()
+    expect(codeProgram({ ...span, input: JSON.stringify({ code: 'return 1', description: [] }) })).toBeUndefined()
     expect(spanSummary(span).input).toBe('Read the project metadata')
     expect(codeProgram({ ...span, schema: undefined })?.language).toBeUndefined()
     expect(codeProgram({ ...span, name: 'bash' })).toBeUndefined()

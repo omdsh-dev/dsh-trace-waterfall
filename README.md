@@ -27,7 +27,7 @@ A 100-second tour: the built-in trajectory view for comparison, the main interac
 
 ## Install
 
-Requires Node 24.9+ and pnpm 11 on `PATH` (`dsh plugin` uses pnpm; pnpm 10 fails with `ERR_PNPM_ADDING_TO_ROOT`). Tested with DSH **0.2.1-rc.5** and the 0.2.2-alpha line (master at `ce7073d`); DSH's plugin APIs are pre-stable.
+Requires Node 24.9+ and pnpm 11 on `PATH` (`dsh plugin` uses pnpm; pnpm 10 fails with `ERR_PNPM_ADDING_TO_ROOT`). Tested with DSH **0.2.1-rc.5** through **0.2.2-rc.5** (`master` at `2e39e70`); DSH's plugin APIs are pre-stable.
 
 Install from GitHub:
 

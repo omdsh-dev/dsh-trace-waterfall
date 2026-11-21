@@ -180,12 +180,12 @@ describe('waterfall interactions', () => {
     fireEvent.doubleClick(screen.getByRole('group', { name: 'Session overview' }))
     expect(screen.getByRole('button', { name: 'Zoom out' }).hasAttribute('disabled')).toBe(true)
   })
-  it('keeps run_code description in the row and opens the host numbered source renderer', () => {
-    const source = fixture(), program = tool('program', 'run_code', 100, 200)
-    program.call = { name: 'run_code', argsRaw: '{"code":"const answer = 42\\nreturn answer","description":"Inspect project metadata"}' }
+  it.each(['run_code', 'cua_run_code'])('keeps %s description in the row and opens the host numbered source renderer', (toolName) => {
+    const source = fixture(), program = tool('program', toolName, 100, 200)
+    program.call = { name: toolName, argsRaw: '{"code":"const answer = 42\\nreturn answer","description":"Inspect project metadata"}' }
     render(<TraceView {...props({ ...source, eventNodes: [program], requests: [] })} />)
     expect(screen.getByText('Inspect project metadata')).toBeTruthy()
-    fireEvent.click(screen.getAllByRole('button', { name: 'Inspect run_code' })[0]!)
+    fireEvent.click(screen.getAllByRole('button', { name: `Inspect ${toolName}` })[0]!)
     fireEvent.click(screen.getByRole('button', { name: 'Full details' }))
     expect(document.querySelector('[data-line-numbers="true"]')?.textContent).toContain('const answer = 42')
     expect(screen.getByRole('button', { name: 'Source' }).getAttribute('aria-pressed')).toBe('true')
